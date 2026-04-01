@@ -1,10 +1,3 @@
-// Generate or load session ID
-let sessionId = localStorage.getItem("session_id");
-
-if (!sessionId) {
-  sessionId = crypto.randomUUID();
-  localStorage.setItem("session_id", sessionId);
-}
 <!DOCTYPE html>
 <html>
 <head>
@@ -20,8 +13,15 @@ if (!sessionId) {
 <button onclick="send()">Send</button>
 
 <script>
+let sessionId = localStorage.getItem("session_id");
+
+if (!sessionId) {
+    sessionId = crypto.randomUUID();
+    localStorage.setItem("session_id", sessionId);
+}
 
 const chat = document.getElementById("chat");
+const input = document.getElementById("input");
 
 const saved = localStorage.getItem("chatHistory");
 if (saved) {
@@ -35,7 +35,7 @@ input.addEventListener("input", function () {
   this.style.height = this.scrollHeight + "px";
 });
 
-// ENTER TO SEND (Shift+Enter = newline)
+// ENTER TO SEND
 input.addEventListener("keydown", function(event) {
   if (event.key === "Enter" && !event.shiftKey) {
     event.preventDefault();
@@ -47,12 +47,8 @@ async function send() {
   const msg = input.value.trim();
   if (!msg) return;
 
-  const chat = document.getElementById("chat");
-
-  // show loading instantly
   const loadingId = Date.now();
 
-  // ADD message (not replace)
   chat.innerHTML += `
     <div id="msg-${loadingId}">
       <p><b>You:</b> ${msg}</p>
@@ -62,11 +58,9 @@ async function send() {
 
   chat.scrollTop = chat.scrollHeight;
 
-  // clear input immediately (feels faster)
   input.value = "";
   input.style.height = "auto";
 
-  // fetch response
   const res = await fetch("/chat", {
     method: "POST",
     headers: {
@@ -78,18 +72,15 @@ async function send() {
 
   const data = await res.json();
 
-  // replace loading message
-document.getElementById(`msg-${loadingId}`).innerHTML = `
-  <p><b>You:</b> ${msg}</p>
-  <pre><b>Zippz:</b>\n${data.reply}</pre>
-`;
+  document.getElementById(`msg-${loadingId}`).innerHTML = `
+    <p><b>You:</b> ${msg}</p>
+    <pre><b>Zippz:</b>\n${data.reply}</pre>
+  `;
 
-// ✅ save AFTER updating chat
-localStorage.setItem("chatHistory", chat.innerHTML);
+  localStorage.setItem("chatHistory", chat.innerHTML);
 
   chat.scrollTop = chat.scrollHeight;
 }
-
 </script>
 
 </body>
